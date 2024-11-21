@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-redux": "^9.1.2",
+    "socket.io-client": "^4.8.0"
+  }
+}
