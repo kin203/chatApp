@@ -311,7 +311,7 @@ const Sidebar = () => {
               />
             </button>
             <button
-              onClick={() => setShowLogoutConfirm(true)} // Mở modal xác nhận đăng xuất
+              onClick={() => setShowLogoutConfirm(true)} 
               className="w-12 h-12 flex justify-center items-center rounded-lg hover:bg-blue-100 text-gray-500"
               title="Logout"
             >
@@ -371,12 +371,11 @@ const Sidebar = () => {
         {editUserOpen && (
           <EditUserDetails
             onClose={() => setEditUserOpen(false)}
-            user={user} // Truyền user từ Redux vào
+            user={user} 
           />
         )}
         {openSearchUser && <SearchUser onClose={() => setOpenSearchUser(false)} />}
 
-        {/* Logout Confirmation Modal */}
         {showLogoutConfirm && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50 transition-all duration-300 ease-in-out">
             <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full transform scale-95 transition-transform duration-300 ease-in-out">

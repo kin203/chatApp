@@ -22,20 +22,20 @@
     border-style: solid;
   }
   .full-background {
-    background-image: url('../assets/Desktop.png'); /* Đường dẫn hình ảnh */
+    background-image: url('../assets/Desktop.png'); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    height: 100vh; /* Toàn bộ chiều cao màn hình */
+    height: 100vh; 
   }
 
   /* Preview container */
   .preview-container {
-    background-color: #f3f4f6; /* Màu nền preview */
-    padding: 8px; /* Khoảng cách */
-    border-radius: 8px; /* Góc bo */
+    background-color: #f3f4f6; 
+    padding: 8px; 
+    border-radius: 8px; 
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px; /* Khoảng cách với input */
+    margin-bottom: 10px; 
   }

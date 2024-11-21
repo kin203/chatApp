@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { HiDotsVertical } from 'react-icons/hi';
-import { FaAngleLeft, FaImage, FaVideo } from 'react-icons/fa6';
 import { IoMdSend, IoMdClose } from "react-icons/io";
+import { FaAngleLeft, FaImage, FaVideo, FaPhone } from 'react-icons/fa6';
 import Avatar from './Avatar';
 import moment from 'moment';
 import uploadFile from '../helpers/uploadFile';
-import backgroundImage from '../assets/Desktop.png';
 import styles from './MessagePage.module.css';
+import VideoPlayer from './VideoPlayer';
 
 const MessagePage = () => {
   const params = useParams();
@@ -56,7 +56,7 @@ const MessagePage = () => {
         }
       });
     }
-
+    
     return () => {
       if (socketConnection) {
         socketConnection.off('message');
@@ -64,6 +64,8 @@ const MessagePage = () => {
       }
     };
   }, [socketConnection, params?.userId]);
+
+
 
   const handleOnChange = (e) => {
     setMessage((prev) => ({ ...prev, text: e.target.value }));
@@ -87,6 +89,12 @@ const MessagePage = () => {
       });
     }
   };
+
+  const [isUserInfoTabOpen, setUserInfoTabOpen] = useState(false);
+
+  const toggleUserInfoTab = () => {
+    setUserInfoTabOpen((prev) => !prev);
+};
 
   const handleUploadFile = async (file, type) => {
     if (!file || (type === 'image' && !file.type.startsWith("image/")) || (type === 'video' && !file.type.startsWith("video/"))) {
@@ -128,11 +136,22 @@ const MessagePage = () => {
             <span
               className={`text-sm ${dataUser.online ? 'text-green-500' : 'text-gray-500'}`}
             >
-              {dataUser.online ? '● Online' : 'Offline'}
+              {dataUser.online ? 'Online' : 'Offline'}
             </span>
           </div>
         </div>
-        <HiDotsVertical size={24} className="text-gray-500 cursor-pointer" />
+
+        <div className="flex items-center gap-3">
+          {/* Nút gọi điện */}
+          <button >
+            <FaPhone size={24} className="text-green-500 cursor-pointer" />
+          </button>
+          <HiDotsVertical
+            size={24}
+            className="text-gray-500 cursor-pointer"
+            onClick={() => setUserInfoTabOpen(!isUserInfoTabOpen)}
+          />
+        </div>
       </header>
 
       {/* Messages */}
@@ -151,17 +170,28 @@ const MessagePage = () => {
                 />
               )}
               <div
-                className={`p-2 rounded-lg w-fit max-w-sm shadow ${user._id === msg?.msgByUserId ? 'ml-auto bg-teal-100' : 'bg-white'}`}
+                className={`p-2 rounded-lg w-fit max-w-sm shadow ${
+                  user._id === msg?.msgByUserId ? 'ml-auto bg-teal-100' : 'bg-white'
+                }`}
               >
                 {msg?.imageUrl && (
-                  <img src={msg?.imageUrl} alt="attachment" className="w-full h-full object-scale-down rounded" />
+                  <img
+                    src={msg?.imageUrl}
+                    alt="attachment"
+                    className="w-full h-full object-scale-down rounded"
+                  />
                 )}
                 {msg?.videoUrl && (
-                  <video src={msg.videoUrl} className="w-full h-full object-scale-down rounded" controls />
+                  <div className="w-full">
+                    <VideoPlayer src={msg.videoUrl} />
+                  </div>
                 )}
                 <p className="px-2 text-sm">{msg.text}</p>
-                <p className="text-xs text-gray-500 mt-1">{moment(msg.createdAt).format('hh:mm A')}</p>
-              </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {moment(msg.createdAt).format('hh:mm A')}
+                </p>
+              </div>;
+
             </div>
           ))}
           <div ref={currentMessage} />
@@ -237,6 +267,59 @@ const MessagePage = () => {
           </form>
         </div>
       </section>
+
+      {/* Conversation Info  */}
+      {isUserInfoTabOpen && (
+        <div className="fixed inset-0 z-50">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0"
+            onClick={() => setUserInfoTabOpen(false)} 
+          ></div>
+          
+          <div
+            className={`fixed top-12 right-4 h-100 w-80 bg-white shadow rounded-xl border-spacing-2 overflow-y-auto slide-in`}
+          >
+            <div className="flex flex-col items-center p-10 mt-5">
+              <img
+                src={dataUser?.profile_pic || 'https://via.placeholder.com/100'}
+                alt="User Avatar"
+                className="w-24 h-24 rounded-full object-cover"
+              />
+              <h3 className="text-lg font-semibold mt-4">{dataUser?.name}</h3>
+              <span
+                className={`text-sm ${dataUser.online ? 'text-green-500' : 'text-gray-500'}`}
+              >
+                {dataUser.online ? '● Online' : 'Offline'}
+              </span>
+            </div>
+            <div className="p-4">
+              <h4 className="text-md font-bold mb-2">Media</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {allMessage
+                  .filter((msg) => msg.imageUrl || msg.videoUrl)
+                  .map((msg, index) => (
+                    <div key={index} className="w-full h-24 relative">
+                      {msg.imageUrl ? (
+                        <img
+                          src={msg.imageUrl}
+                          alt="Sent Image"
+                          className="w-full h-full object-cover rounded"
+                        />
+                      ) : (
+                        <video
+                          src={msg.videoUrl}
+                          className="w-full h-full object-cover rounded"
+                          controls
+                        />
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
