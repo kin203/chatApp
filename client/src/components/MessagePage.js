@@ -9,9 +9,17 @@ import moment from 'moment';
 import uploadFile from '../helpers/uploadFile';
 import styles from './MessagePage.module.css';
 import VideoPlayer from './VideoPlayer';
+import Modal from 'react-modal';
 
 const MessagePage = () => {
   const params = useParams();
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const messagesContainerRef = useRef(null);
+
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isImageModalOpen, setImageModalOpen] = useState(false);
+
   const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const user = useSelector((state) => state?.user);
 
@@ -31,46 +39,90 @@ const MessagePage = () => {
 
   const [loading, setLoading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
+  const [isUserInfoTabOpen, setUserInfoTabOpen] = useState(false);
+
   const currentMessage = useRef(null);
 
+  const openImageModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setImageModalOpen(true);
+  };
+  
+  const closeImageModal = () => {
+    setSelectedImage(null);
+    setImageModalOpen(false);
+  };
+
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop <= container.clientHeight + 300; // Kiểm tra cách đáy bao nhiêu px
+      setShowScrollToBottom(!isNearBottom);
+    }
+  };
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      handleScroll(); // Kiểm tra trạng thái ban đầu
+    }
+    return () => {
+      container?.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (currentMessage.current) {
       currentMessage.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [allMessage]);
 
+  // Lấy tin nhắn và thông tin người dùng
   useEffect(() => {
     if (socketConnection) {
+      // Gửi sự kiện yêu cầu thông tin và tin nhắn
       socketConnection.emit('message-page', params.userId);
       socketConnection.emit('seen', params.userId);
 
+      // Lắng nghe thông tin người dùng
       socketConnection.on('message-user', (data) => {
         setDataUser(data);
       });
 
+      // Lắng nghe tin nhắn
       socketConnection.on('message', (data) => {
-        if (!Array.isArray(data)) {
-          setAllMessage((prevMessages) => [...prevMessages, data]);
+        if (Array.isArray(data)) {
+          setAllMessage(data); // Tin nhắn lịch sử
         } else {
-          setAllMessage(data);
+          setAllMessage((prevMessages) => [...prevMessages, data]); // Tin nhắn mới
         }
       });
+
+      // Lắng nghe danh sách hội thoại
+      socketConnection.on('conversation', (conversations) => {
+        // Cập nhật danh sách hội thoại nếu cần
+        console.log('Updated conversations:', conversations);
+      });
     }
-    
+
     return () => {
       if (socketConnection) {
         socketConnection.off('message');
         socketConnection.off('message-user');
+        socketConnection.off('conversation');
       }
     };
-  }, [socketConnection, params?.userId]);
+  }, [socketConnection, params.userId]);
 
-
-
+  // Xử lý nhập tin nhắn
   const handleOnChange = (e) => {
     setMessage((prev) => ({ ...prev, text: e.target.value }));
   };
 
+  // Gửi tin nhắn
   const handleSendMessage = (e) => {
     e.preventDefault();
     if ((message.text || message.imageUrl || message.videoUrl) && !loading) {
@@ -90,12 +142,7 @@ const MessagePage = () => {
     }
   };
 
-  const [isUserInfoTabOpen, setUserInfoTabOpen] = useState(false);
-
-  const toggleUserInfoTab = () => {
-    setUserInfoTabOpen((prev) => !prev);
-};
-
+  // Xử lý tải tệp (hình ảnh hoặc video)
   const handleUploadFile = async (file, type) => {
     if (!file || (type === 'image' && !file.type.startsWith("image/")) || (type === 'video' && !file.type.startsWith("video/"))) {
       alert(`Chỉ được chọn ${type === 'image' ? 'hình ảnh' : 'video'}!`);
@@ -116,8 +163,82 @@ const MessagePage = () => {
     }
   };
 
+  // Xóa cuộc hội thoại
+  const handleDeleteConversation = () => {
+    socketConnection.emit('delete-conversation', { recipientId: params.userId }, (response) => {
+      if (response.success) {
+        alert('Cuộc hội thoại đã được xóa.');
+        setAllMessage([]); // Xóa tin nhắn hiển thị trên giao diện
+        setUserInfoTabOpen(false); // Đóng tab thông tin người dùng
+
+        // Tải lại danh sách hội thoại
+        socketConnection.emit('sidebar', user._id);
+      } else {
+        alert(response.message || 'Đã xảy ra lỗi khi xóa cuộc hội thoại.');
+      }
+    });
+  };
+
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = (e.clipboardData || window.clipboardData).items;
+  
+      for (let item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            handleUploadFile(file, 'image'); // Gọi hàm upload file với file từ clipboard
+          }
+        }
+      }
+    };
+  
+    window.addEventListener('paste', handlePaste);
+  
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, []);
+
   return (
     <div className={`flex flex-col h-screen ${styles['full-background']}`}>
+      {/* Modal xem ảnh */}
+      <Modal
+        isOpen={isImageModalOpen}
+        onRequestClose={closeImageModal}
+        contentLabel="Xem ảnh"
+        style={{
+          overlay: { backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 50 },
+          content: {
+            top: '50%',
+            left: '50%',
+            right: 'auto',
+            bottom: 'auto',
+            marginRight: '-50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+          },
+        }}
+      >
+        {selectedImage && (
+          <div className="flex justify-center items-center relative">
+            <img
+              src={selectedImage}
+              alt="Xem ảnh"
+              className="max-w-full max-h-screen rounded-lg shadow-lg"
+            />
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-gray-400"
+            >
+              &times;
+            </button>
+          </div>
+        )}
+      </Modal>
+      
       {/* Header */}
       <header className="flex items-center justify-between bg-white px-4 py-1.5 shadow">
         <div className="flex items-center gap-3">
@@ -155,7 +276,9 @@ const MessagePage = () => {
       </header>
 
       {/* Messages */}
-      <section className="flex-1 overflow-y-auto px-4 py-4">
+      <section
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4">
         <div className="flex flex-col gap-6">
           {allMessage.map((msg, index) => (
             <div
@@ -174,17 +297,19 @@ const MessagePage = () => {
                   user._id === msg?.msgByUserId ? 'ml-auto bg-teal-100' : 'bg-white'
                 }`}
               >
-                {msg?.imageUrl && (
-                  <img
-                    src={msg?.imageUrl}
-                    alt="attachment"
-                    className="w-full h-full object-scale-down rounded"
-                  />
-                )}
                 {msg?.videoUrl && (
                   <div className="w-full">
                     <VideoPlayer src={msg.videoUrl} />
                   </div>
+                )}
+                {msg?.imageUrl && (
+                  <button onClick={() => openImageModal(msg.imageUrl)}>
+                    <img
+                      src={msg.imageUrl}
+                      alt="attachment"
+                      className="w-full h-full object-scale-down rounded cursor-pointer"
+                    />
+                  </button>
                 )}
                 <p className="px-2 text-sm">{msg.text}</p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -196,6 +321,20 @@ const MessagePage = () => {
           ))}
           <div ref={currentMessage} />
         </div>
+        {showScrollToBottom && (
+          <button
+            onClick={() => {
+              messagesContainerRef.current?.scrollTo({
+                top: messagesContainerRef.current.scrollHeight,
+                behavior: 'smooth',
+              });
+            }}
+            className="fixed bottom-16 right-1/2 translate-x-1/2 p-2 bg-white text-slate-500 rounded-full shadow-md hover:bg-slate-200"
+            style={{ width:40, height:40  }}
+          >
+            ↓
+          </button>
+        )}
       </section>
 
       {/* Input Section */}
@@ -301,22 +440,20 @@ const MessagePage = () => {
                   .map((msg, index) => (
                     <div key={index} className="w-full h-24 relative">
                       {msg.imageUrl ? (
-                        <img
-                          src={msg.imageUrl}
-                          alt="Sent Image"
-                          className="w-full h-full object-cover rounded"
-                        />
+                        <img src={msg.imageUrl} alt="Sent Image" className="w-full h-full object-cover rounded" />
                       ) : (
-                        <video
-                          src={msg.videoUrl}
-                          className="w-full h-full object-cover rounded"
-                          controls
-                        />
+                        <video src={msg.videoUrl} className="w-full h-full object-cover rounded" controls />
                       )}
                     </div>
                   ))}
               </div>
-            </div>
+              <button
+                onClick={handleDeleteConversation}
+                className="w-full bg-red-500 text-white py-2 mt-4 rounded-lg hover:bg-red-600"
+              >
+                Xóa cuộc hội thoại
+              </button>
+            </div>;
           </div>
         </div>
       )}

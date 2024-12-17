@@ -14,48 +14,68 @@ const Home = () => {
   const navigate =useNavigate()
   const location= useLocation()
 
-  const fetchUserDetails = async()=>{
+  const fetchUserDetails = async () => {
     try {
-        const URL = `${process.env.REACT_APP_BACKEND_URL}/api/user-details`
-        const response = await axios({
-          url : URL,
-          withCredentials : true
-        })
-
-        dispatch(setUser(response.data.data))
-        if(response.data.data.logout){
-          dispatch(logout())
-          navigate('/email')
-        }
-        console.log("current user Details",response)
-    } catch (error) {
-        console.log("error",error)
-    }
-  }
-
-  useEffect(()=>{
-    fetchUserDetails()
-  },[])
-
-  // socket connection
-  useEffect(()=>{
-    const socketConnection = io(process.env.REACT_APP_BACKEND_URL,{
-      auth: {
-        token : localStorage.getItem('token')
+      const URL = `${process.env.REACT_APP_BACKEND_URL}/api/user-details`;
+      console.log("Fetching user details from:", URL); // Log URL để kiểm tra
+  
+      const response = await axios.get(URL, {
+        withCredentials: true, // Gửi cookie cùng request
+      });
+  
+      console.log("User Details Response:", response); // Log toàn bộ response
+      dispatch(setUser(response.data.data));
+  
+      if (response.data.data.logout) {
+        dispatch(logout());
+        navigate('/email');
       }
-    })
-
-    socketConnection.on('onlineUser',(data)=>{
-      dispatch(setOnlineUser(data))
-    })
-
-    dispatch(setSocketConnection(socketConnection))
-
-    return ()=>{
-      socketConnection.disconnect()
+    } catch (error) {
+      console.error("Fetch User Details Error:", error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        console.log("Token invalid or expired. Logging out...");
+        dispatch(logout());
+        navigate('/email'); // Chuyển hướng đến trang login
+      }
     }
+  };
 
-  },[])
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+  
+    if (!token) {
+      console.warn("No token found. Redirecting to login.");
+      navigate('/email');
+      return;
+    }
+  
+    const socketConnection = io(process.env.REACT_APP_BACKEND_URL, {
+      auth: {
+        token: token, // Gửi token để xác thực với Socket.IO server
+      },
+      withCredentials: true, // Đảm bảo credentials được gửi
+    });
+  
+    socketConnection.on('connect', () => {
+      console.log("Socket connected:", socketConnection.id);
+    });
+  
+    socketConnection.on('onlineUser', (data) => {
+      console.log("Online users:", data);
+      dispatch(setOnlineUser(data));
+    });
+  
+    socketConnection.on('connect_error', (err) => {
+      console.error("Socket connection error:", err.message);
+    });
+  
+    dispatch(setSocketConnection(socketConnection));
+  
+    return () => {
+      socketConnection.disconnect();
+      console.log("Socket disconnected");
+    };
+  }, [navigate, dispatch]);
 
   // Kiểm tra token trong localStorage trước khi gọi fetchUserDetails
   useEffect(() => {

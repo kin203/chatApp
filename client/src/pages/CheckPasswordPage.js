@@ -28,39 +28,37 @@ const CheckPasswordPage = () => {
   }, [location, navigate]);
   
 
-  const handleSummit = async (e)=>{
-    e.preventDefault()
-    e.stopPropagation()
-
-    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/password`
-
+  const handleSummit = async (e) => {
+    e.preventDefault();
+  
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/password`;
+    console.log("Request URL:", URL);
+    console.log("Request Body:", {
+      userId: location?.state?._id,
+      password: data.password
+    });
+  
     try {
-      const response = await axios({
-        method : 'post',
-        url : URL,
-        data : {
-          userId : location?.state?._id,
-          password : data.password
-        },
-        withCredentials : true
-      })
-
-      toast.success(response?.data?.message)
-
-      if(response.data.success){
-        dispatch(setToken(response?.data?.token))//
-        localStorage.setItem('token',response?.data?.token)//
-        
-
-        setData({
-          password : "",
-        })
-        navigate('/')
+      const response = await axios.post(URL, {
+        userId: location?.state?._id,
+        password: data.password
+      }, {
+        withCredentials: true // Đảm bảo gửi credentials
+      });
+  
+      console.log("Response:", response.data);
+      toast.success(response?.data?.message);
+  
+      if (response.data.success) {
+        dispatch(setToken(response?.data?.token));
+        localStorage.setItem('token', response?.data?.token);
+        navigate('/');
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message)
+      console.error("Error:", error?.response || error.message);
+      toast.error(error?.response?.data?.message || "Something went wrong!");
     }
-  }
+  };
   
   const handleOnChange = (e)=>{
     const {name,value} = e.target

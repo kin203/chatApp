@@ -72,7 +72,7 @@ const CheckEmailPage = () => {
           <div className='w-fit mx-auto mb-2'>
             <PiUserCircle size={80} />
           </div>
-          <h3 className='text-3xl font-bold text-center mb-6'>Welcome to Chat App!</h3>
+          <h3 className='text-3xl font-bold text-center mb-6'>Welcome to Mager App!</h3>
 
           <form className='grid gap-4 mt-3' onSubmit={handleSubmit}>
             <div className='flex flex-col gap-1'>
