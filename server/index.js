@@ -14,6 +14,16 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParse())
 
+// Test cookie endpoint
+app.get('/api/test', (req, res) => {
+  res.cookie('token', 'sample-token', {
+    httpOnly: true,
+    sameSite: 'Lax', // Nếu frontend và backend cùng domain
+    secure: false, // HTTPS bắt buộc nếu production
+  });
+  res.json({ message: 'Cookie set successfully!' });
+});
+
 const PORT = process.env.PORT || 8080
 
 app.get('/',(request,response)=>{
