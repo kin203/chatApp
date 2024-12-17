@@ -32,10 +32,10 @@ router.post('/update-user',updateUserInfo)
 //seach User
 router.post('/search-user',searchUser)
 
-// sendOTP
-router.post('/send-otp',sendOTP)
+// // sendOTP
+// router.post('/send-otp',sendOTP)
 
-router.post('/reset-password',resetPassword)
+// router.post('/reset-password',resetPassword)
 
 
 module.exports = router
