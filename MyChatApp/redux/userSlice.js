@@ -17,13 +17,20 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUser: (state, action) => {
-      const { _id, name, email, profile_pic } = action.payload;
-      state.user = { _id, name, email, profile_pic }; // Cập nhật thông tin người dùng
+      const { _id, name, email, profile_pic,createdAt } = action.payload;
+      state.user = { _id, name, email, profile_pic,createdAt }; // Cập nhật thông tin người dùng
     },
     setToken: (state, action) => {
       state.token = action.payload; // Gán token
     },
     logout: (state) => {
+      // Ngắt kết nối socket nếu đang hoạt động
+      if (state.socketConnection) {
+        state.socketConnection.disconnect();
+        console.log("Socket disconnected during logout.");
+      }
+    
+      // Xóa toàn bộ trạng thái
       state.token = null; // Xóa token
       state.user = { _id: "", name: "", email: "", profile_pic: "" }; // Xóa thông tin người dùng
       state.onlineUser = []; // Xóa danh sách online

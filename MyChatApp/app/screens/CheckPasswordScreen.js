@@ -33,6 +33,7 @@ export default function CheckPasswordScreen() {
         userId: userId, // từ useLocalSearchParams
         password: password,
       });
+      console.log('API Response:', response.data);
 
       const token = response.data.token;
       await AsyncStorage.setItem('token', token);
