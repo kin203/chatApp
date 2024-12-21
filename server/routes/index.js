@@ -8,7 +8,13 @@ const updateUserInfo = require('../controller/updateUserInfo')
 const searchUser = require('../controller/searchUser')
 const sendOTP = require('../controller/sendOTP')
 const resetPassword = require('../controller/resetPassword')
+<<<<<<< Updated upstream
 const getConversations = require('../controller/getConversation')
+=======
+const deleteConversation = require('../controller/deleteConversation')
+const getConversations = require('../controller/getConversation')
+const getMessages = require('../controller/getMessages')
+>>>>>>> Stashed changes
 
 const router = express.Router()
 
@@ -33,10 +39,14 @@ router.post('/update-user',updateUserInfo)
 //seach User
 router.post('/search-user',searchUser)
 
-// // sendOTP
-// router.post('/send-otp',sendOTP)
+// sendOTP
+router.post('/send-otp',sendOTP)
 
-// router.post('/reset-password',resetPassword)
+router.post('/reset-password',resetPassword)
+
+router.delete('/delete-conversation', deleteConversation);
+router.get('/conversations', getConversations);
+router.get('/messages/:recipientId', getMessages);
 
 router.get('/conversations', getConversations);
 
