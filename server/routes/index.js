@@ -8,13 +8,9 @@ const updateUserInfo = require('../controller/updateUserInfo')
 const searchUser = require('../controller/searchUser')
 const sendOTP = require('../controller/sendOTP')
 const resetPassword = require('../controller/resetPassword')
-<<<<<<< Updated upstream
-const getConversations = require('../controller/getConversation')
-=======
 const deleteConversation = require('../controller/deleteConversation')
 const getConversations = require('../controller/getConversation')
 const getMessages = require('../controller/getMessages')
->>>>>>> Stashed changes
 
 const router = express.Router()
 
@@ -48,10 +44,5 @@ router.delete('/delete-conversation', deleteConversation);
 router.get('/conversations', getConversations);
 router.get('/messages/:recipientId', getMessages);
 
-router.get('/conversations', getConversations);
-
 
 module.exports = router
-
-
-
