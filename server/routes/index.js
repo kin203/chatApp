@@ -37,6 +37,8 @@ router.post('/search-user',searchUser)
 
 // router.post('/reset-password',resetPassword)
 
+router.get('/conversations', getConversations);
+
 
 module.exports = router
 
