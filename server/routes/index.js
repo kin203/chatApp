@@ -8,6 +8,7 @@ const updateUserInfo = require('../controller/updateUserInfo')
 const searchUser = require('../controller/searchUser')
 const sendOTP = require('../controller/sendOTP')
 const resetPassword = require('../controller/resetPassword')
+const getConversations = require('../controller/getConversation')
 
 const router = express.Router()
 
