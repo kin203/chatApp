@@ -1,50 +1,52 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  token: null, // Token xác thực
+  token: null, 
   user: {
     _id: "",
     name: "",
     email: "",
     profile_pic: "",
-  }, // Thông tin người dùng
-  onlineUser: [], // Danh sách người dùng đang online
-  socketConnection: null, // Kết nối socket
+  },
+  onlineUser: [], 
+  socketConnection: null, 
+  userId: null, // Thêm trường userId
 };
 
-export const userSlice = createSlice({
+const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
     setUser: (state, action) => {
-      const { _id, name, email, profile_pic,createdAt } = action.payload;
-      state.user = { _id, name, email, profile_pic,createdAt }; // Cập nhật thông tin người dùng
+      const { _id, name, email, profile_pic, createdAt } = action.payload;
+      state.user = { _id, name, email, profile_pic, createdAt };
     },
     setToken: (state, action) => {
-      state.token = action.payload; // Gán token
+      state.token = action.payload;
+    },
+    setUserId: (state, action) => {
+      state.userId = action.payload; // Lưu userId
     },
     logout: (state) => {
-      // Ngắt kết nối socket nếu đang hoạt động
-      if (state.socketConnection) {
+      if (state.socketConnection && typeof state.socketConnection.disconnect === 'function') {
         state.socketConnection.disconnect();
         console.log("Socket disconnected during logout.");
       }
-    
-      // Xóa toàn bộ trạng thái
-      state.token = null; // Xóa token
-      state.user = { _id: "", name: "", email: "", profile_pic: "" }; // Xóa thông tin người dùng
-      state.onlineUser = []; // Xóa danh sách online
-      state.socketConnection = null; // Ngắt kết nối socket
+      state.token = null;
+      state.user = { _id: "", name: "", email: "", profile_pic: "" };
+      state.onlineUser = [];
+      state.socketConnection = null;
+      state.userId = null; // Xóa userId khi logout
     },
     setOnlineUser: (state, action) => {
-      state.onlineUser = action.payload; // Cập nhật danh sách người dùng online
+      state.onlineUser = action.payload;
     },
     setSocketConnection: (state, action) => {
-      state.socketConnection = action.payload; // Cập nhật thông tin kết nối socket
+      state.socketConnection = action.payload;
     },
   },
 });
 
-export const { setUser, setToken, logout, setOnlineUser, setSocketConnection } = userSlice.actions;
+export const { setUser, setToken, logout, setUserId, setOnlineUser, setSocketConnection } = userSlice.actions;
 
 export default userSlice.reducer;
