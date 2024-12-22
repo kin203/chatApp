@@ -28,8 +28,6 @@ const HomeScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isSearchUserVisible, setIsSearchUserVisible] = useState(false);
-
-  // Thêm state quản lý tìm kiếm người dùng
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -50,7 +48,7 @@ const HomeScreen = () => {
       });
 
       if (response.data?.data) {
-        dispatch(setUser(response.data.data));
+        dispatch(setUser(response.data.data)); // Set user details to Redux
       } else {
         throw new Error('Invalid user data from API.');
       }
@@ -63,6 +61,21 @@ const HomeScreen = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [refreshing, setRefreshing] = useState(false); // Trạng thái làm mới
+
+  const handleRefresh = async () => {
+    setRefreshing(true); // Bắt đầu hiển thị trạng thái làm mới
+
+    try {
+      await fetchConversations(); // Gọi API để tải lại danh sách tin nhắn
+    } catch (error) {
+      console.error('Error refreshing conversations:', error);
+      Alert.alert('Error', 'Failed to refresh conversations.');
+    } finally {
+      setRefreshing(false); // Tắt trạng thái làm mới
     }
   };
 
@@ -122,7 +135,7 @@ const HomeScreen = () => {
   };
 
   const handleConversationPress = (conv) => {
-    dispatch(setUserId(conv.userDetails._id));
+    dispatch(setUserId(conv.userDetails._id)); // Store userId in Redux
     router.push('/screens/ChatScreen');
   };
 
@@ -138,7 +151,7 @@ const HomeScreen = () => {
 
   const handleLogout = async () => {
     try {
-      dispatch(logout());
+      dispatch(logout()); // Log out the user from Redux
       await AsyncStorage.clear();
       router.replace('/screens/CheckEmailScreen');
     } catch (error) {
@@ -156,12 +169,16 @@ const HomeScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mager</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => setIsSearchUserVisible(true)}>
-            <Ionicons name="search" size={35} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsModalVisible(true)}>
-            <Ionicons name="ellipsis-vertical" size={24} color="white" />
-          </TouchableOpacity>
+          <View style={styles.iconWrapper}>
+            <TouchableOpacity onPress={() => setIsSearchUserVisible(true)}>
+              <Ionicons name="search" size={25} color="black" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.iconWrapper}>
+            <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+              <Ionicons name="ellipsis-vertical" size={25} color="black" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -170,26 +187,32 @@ const HomeScreen = () => {
         {conversations.length === 0 ? (
           <Text style={styles.noConversationText}>No conversations yet.</Text>
         ) : (
-          conversations.map((conv) => (
-            <TouchableOpacity
-              key={conv?._id}
-              style={styles.conversationItem}
-              onPress={() => handleConversationPress(conv)}
-            >
-              <Image
-                source={{
-                  uri: conv.userDetails.profile_pic || 'https://via.placeholder.com/150',
-                }}
-                style={styles.conversationAvatar}
-              />
-              <View style={styles.conversationDetails}>
-                <Text style={styles.conversationName}>{conv.userDetails.name}</Text>
-                <Text style={styles.conversationLastMessage}>
-                  {conv.lastMsg?.text.slice(0,35 ) || 'No messages yet.'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
+          <FlatList
+        data={conversations}
+        keyExtractor={(item) => item._id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.conversationItem}
+            onPress={() => handleConversationPress(item)}
+          >
+            <Image
+              source={{
+                uri: item.userDetails.profile_pic || 'https://via.placeholder.com/150',
+              }}
+              style={styles.conversationAvatar}
+            />
+            <View style={styles.conversationDetails}>
+              <Text style={styles.conversationName}>{item.userDetails.name}</Text>
+              <Text style={styles.conversationLastMessage}>
+                {item.lastMsg?.text.slice(0, 35) || 'No messages yet.'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        refreshing={refreshing} 
+        onRefresh={handleRefresh} 
+        contentContainerStyle={styles.flatListContent} 
+      />
         )}
       </View>
 
@@ -224,9 +247,9 @@ const HomeScreen = () => {
                   key={user._id}
                   style={styles.userItem}
                   onPress={() => {
-                    dispatch(setUserId(user._id)); // Lưu userId vào redux
+                    dispatch(setUserId(user._id)); // Save userId in Redux
                     router.push(`/screens/ChatScreen?userId=${user._id}`);
-                    setIsSearchUserVisible(false)
+                    setIsSearchUserVisible(false);
                   }}
                 >
                   <Image
@@ -256,7 +279,7 @@ const HomeScreen = () => {
               source={{ uri: user?.profile_pic || 'https://via.placeholder.com/150' }}
               style={styles.avatar}
             />
-            <Text style={styles.modalTitle}>{user?.user?.name}</Text>
+            <Text style={styles.modalTitle}>{user?.name}</Text>
             <Text>Email: {user?.email}</Text>
             <Text>Account Created: {new Date(user?.createdAt).toLocaleDateString()}</Text>
 
@@ -296,7 +319,7 @@ const HomeScreen = () => {
                   <Text style={styles.closeButtonText}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.closeButton, { backgroundColor: 'red', marginTop:10}]}
+                  style={[styles.closeButton, { backgroundColor: 'red', marginTop: 10 }]}
                   onPress={handleLogout}
                 >
                   <Text style={styles.closeButtonText}>Logout</Text>
@@ -316,12 +339,28 @@ const styles = StyleSheet.create({
     height: 70,
     backgroundColor: '#162447',
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
     paddingHorizontal: 20,
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: 'white' },
-  headerIcons: { flexDirection: 'row', gap: 15 },
+  headerTitle: {
+    fontSize: 25,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerIcons: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 18, 
+  },
+  iconWrapper: {
+    width: 40, // Độ rộng của hình tròn
+    height: 40, // Chiều cao của hình tròn
+    borderRadius: 20, // Tạo bo góc tròn
+    backgroundColor: '#E6E6E6', // Màu nền của hình tròn
+    alignItems: 'center', // Căn giữa icon bên trong
+    justifyContent: 'center', // Căn giữa icon bên trong
+  },
   conversationContainer: { flex: 1, padding: 10 },
   noConversationText: { color: '#E6E6E6', textAlign: 'center', marginTop: 20 },
   conversationItem: {
@@ -336,6 +375,9 @@ const styles = StyleSheet.create({
   conversationDetails: { flex: 1 },
   conversationName: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
   conversationLastMessage: { fontSize: 14, color: '#ddd' },
+  flatListContent: {
+    paddingBottom: 20, 
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
