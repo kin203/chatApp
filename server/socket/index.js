@@ -41,6 +41,7 @@ io.on('connection', async (socket) => {
       socket.join(userId);
       onlineUsers.add(userId);
       io.emit('onlineUser', Array.from(onlineUsers));
+      io.emit('user-status', { userId, online: true });
   } else {
       console.error("User or user._id is undefined:", user);
   }
