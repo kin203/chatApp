@@ -22,8 +22,10 @@
 - [x] **Xem thông tin đoạn chat:**
   - Hiển thị tên người đang chat cùng.
   - Hiển thị danh sách media đã gửi trong đoạn hội thoại.
+- [x] **Ứng dụng mobile:** Xây dựng hệ thống app mobile để sử dụng đa nền tảng.
 - [x] **Trình phát video tối ưu:** Video player được thiết kế lại để cải thiện trải nghiệm.
 - [x] **Responsive:** Giao diện đã responsive được 70%.
+- [x] **Triển khai hệ thống:** Deploy ứng dụng lên hosting để đưa vào sử dụng thực tế.
 
 ---
 
@@ -38,8 +40,6 @@
 - [ ] **Xác minh OTP:** Thêm bước xác minh OTP cho đăng ký/đăng nhập để tăng tính bảo mật và ngăn chặn spam.
 - [ ] **Tối ưu giao diện:** Cải thiện thiết kế giao diện cho thân thiện và đẹp mắt hơn.
 - [ ] **Tối ưu hiệu suất:** Cải thiện hiệu suất cho các chức năng hiện tại và sắp phát triển.
-- [ ] **Ứng dụng mobile:** Xây dựng hệ thống app mobile để sử dụng đa nền tảng.
-- [ ] **Triển khai hệ thống:** Deploy ứng dụng lên hosting để đưa vào sử dụng thực tế.
 
 ---
 
